@@ -1,0 +1,25 @@
+version: '3'
+services:
+  site1:
+    build: ./site1
+    ports:
+     - "5001:80"
+  
+  site2:
+    build: ./site2
+    ports:
+     - "5002:80"
+
+  site3:
+    build: ./site3
+    ports:
+     - "5003:80"
+
+  load_balancer:
+    build: ./load_balancer
+    ports:
+     - "5000:80"
+    depends_on:
+     - site1
+     - site2
+     - site3

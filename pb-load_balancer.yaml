@@ -1,0 +1,49 @@
+- name: Download project in local from github
+  hosts: localhost
+  tasks:
+    - name: Download project
+      git:
+        repo: https://github.com/j0s0n/load_balancer.git
+        dest: /root/load_balancer
+        clone: yes
+        update: yes
+    - name: Compress project
+      archive:
+        path: /root/load_balancer
+        dest: /root/load_balancer.tgz
+
+- name: Launch Nginx load balancer with docker compose
+  hosts: "{{ target_hosts | default('empty') }}"
+  tasks:
+    - name: Copy project to host
+      copy:
+        src: /root/load_balancer.tgz
+        dest: /root/load_balancer.tgz
+    - name: Decompress project
+      unarchive:
+        src: /root/load_balancer.tgz
+        dest: /root
+    - name: Delete compressed project
+      file:
+        path: /root/load_balancer.tgz
+        state: absent
+    - name: Remove existing services
+      docker_compose:
+        project_src: /root/load_balancer
+        state: absent
+    - name: Create and start services
+      docker_compose:
+        project_src: /root/load_balancer
+      register: output
+
+- name: Remove files from local
+  hosts: localhost
+  tasks:
+    - name: Remove project directory
+      file:
+        path: /root/load_balancer
+        state: absent
+    - name: Remove compressed project
+      file:
+        path: /root/load_balancer.tgz
+        state: absent
